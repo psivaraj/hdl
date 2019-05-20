@@ -44,10 +44,10 @@ module system_top (
   output              i2s_mclk,
   output              i2s_bclk,
   output              i2s_lrclk,
-  inout               pmod0_d0,
-  inout               pmod0_d1,
-  inout               pmod0_d2,
-  inout               pmod0_d3,
+  output              pmod0_d0, // CS
+  output              pmod0_d1, // MOSI
+  input               pmod0_d2, // MISO
+  output              pmod0_d3, // SCK
   inout               pmod0_d4,
   inout               pmod0_d5,
   inout               pmod0_d6,
@@ -243,6 +243,7 @@ module system_top (
       3'h1: spi_3_to_8_csn = 8'b11111101;
       3'h2: spi_3_to_8_csn = 8'b11111011;
       3'h3: spi_3_to_8_csn = 8'b11110111;
+      3'h4: spi_3_to_8_csn = 8'b11101111;
       default: spi_3_to_8_csn = 8'b11111111;
     endcase
   end
@@ -251,12 +252,16 @@ module system_top (
   assign spi_csn_adrv9009_b = spi_3_to_8_csn[1];
   assign spi_csn_hmc7044 = spi_3_to_8_csn[2];
   assign spi_csn_hmc7044_car = spi_3_to_8_csn[3];
+  assign pmod0_d0 = spi_3_to_8_csn[4];
+  assign pmod0_d3 = spi_clk;
+  assign pmod0_d1 = spi_3_to_8_csn[4] == 1'b0 ?  spi_mosi : 1'bZ;
+  assign spi_miso_s = spi_3_to_8_csn[4] == 1'b0 ? pmod0_d2 : spi_miso;
 
   adrv9009_zu11eg_som_spi i_spi (
   .spi_csn(spi_3_to_8_csn),
   .spi_clk(spi_clk),
   .spi_mosi(spi_mosi),
-  .spi_miso_i(spi_miso),
+  .spi_miso_i(spi_miso_s),
   .spi_miso_o(spi0_miso),
   .spi_sdio(spi_sdio));
 
@@ -265,6 +270,7 @@ module system_top (
   assign gpio_i[94:90] = gpio_o[94:90];
   assign gpio_i[31:28] = gpio_o[31:28];
   assign gpio_i[21:20] = gpio_o[21:20];
+  assign gpio_i[15:12] = gpio_o[15:12];
 
   ad_iobuf #(.DATA_WIDTH(58)) i_iobuf (
     .dio_t ({gpio_t[89:32]}),
@@ -342,19 +348,21 @@ module system_top (
               hmc7044_car_reset,  // 23
               resetb_ad9545}));   // 22
 
-  ad_iobuf #(.DATA_WIDTH(20)) i_carrier_iobuf_1 (
-    .dio_t ({gpio_t[19:0]}),
-    .dio_i ({gpio_o[19:0]}),
-    .dio_o ({gpio_i[19:0]}),
+  ad_iobuf #(.DATA_WIDTH(4)) i_carrier_iobuf_1 (
+    .dio_t ({gpio_t[19:16]}),
+    .dio_i ({gpio_o[19:16]}),
+    .dio_o ({gpio_i[19:16]}),
     .dio_p ({
-              pmod0_d7,           // 19
-              pmod0_d6,           // 18
-              pmod0_d5,           // 17
-              pmod0_d4,           // 16
-              pmod0_d3,           // 15
-              pmod0_d2,           // 14
-              pmod0_d1,           // 13
-              pmod0_d0,           // 12
+              pmod0_d7,     // 19
+              pmod0_d6,     // 18
+              pmod0_d5,     // 17
+              pmod0_d4}));  // 16
+
+  ad_iobuf #(.DATA_WIDTH(12)) i_carrier_iobuf_2 (
+    .dio_t ({gpio_t[11:0]}),
+    .dio_i ({gpio_o[11:0]}),
+    .dio_o ({gpio_i[11:0]}),
+    .dio_p ({
               led_gpio_3,         // 11
               led_gpio_2,         // 10
               led_gpio_1,         // 9

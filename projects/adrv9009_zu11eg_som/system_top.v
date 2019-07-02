@@ -276,6 +276,67 @@ module system_top (
   assign gpio_i[21:20] = gpio_o[21:20];
   assign gpio_i[15:12] = gpio_o[15:12];
 
+  // DEBUG
+  reg [26:0]  core_clk_counter_a;
+  reg [26:0]  core_clk_counter_b;
+  reg [19:0]  sysref_counter_a;
+  reg [19:0]  sysref_counter_b;
+  reg         led_sysref_a;
+  reg         led_sysref_b;
+  reg         led_coreclk_a;
+  reg         led_coreclk_b;
+  reg         sysref_a_d1;
+  reg         sysref_a_edge;
+  reg         sysref_b_d1;
+  reg         sysref_b_edge;
+
+  assign led_gpio_0 = led_coreclk_a;
+  assign led_gpio_1 = led_sysref_a;
+  assign led_gpio_2 = led_coreclk_a;
+  assign led_gpio_3 = led_sysref_b;
+
+  always @(posedge core_clk_a) begin
+    sysref_a_d1 <= sysref_a;
+    sysref_a_edge <= sysref_a & ~sysref_a_d1;
+  end
+
+  always @(posedge core_clk_b) begin
+    sysref_b_d1 <= sysref_b;
+    sysref_b_edge <= sysref_b & ~sysref_b_d1;
+  end
+
+  always @(posedge core_clk_a) begin
+    if (core_clk_counter_a == 0) begin
+      core_clk_counter_a <= 122880000;
+      led_coreclk_a <= ~led_coreclk_a;
+    end else begin
+      core_clk_counter_a <= core_clk_counter_a - 1;
+    end
+    if (sysref_counter_a == 0) begin
+      sysref_counter_a <= 768000;
+      led_sysref_a <= ~led_sysref_a;
+    end else if (sysref_a_edge == 1'b1) begin
+      sysref_counter_a <= sysref_counter_a - 1;
+    end
+  end
+
+  always @(posedge core_clk_b) begin
+    if (core_clk_counter_b == 0) begin
+      core_clk_counter_b <= 122880000;
+      led_coreclk_b <= ~led_coreclk_b;
+    end else begin
+      core_clk_counter_b <= core_clk_counter_b - 1;
+    end
+    if (sysref_counter_b == 0) begin
+      sysref_counter_b <= 768000;
+      led_sysref_b <= ~led_sysref_b;
+    end else if (sysref_b_edge == 1'b1) begin
+      sysref_counter_b <= sysref_counter_b - 1;
+    end
+  end
+
+  // END DEBUG
+
   ad_iobuf #(.DATA_WIDTH(58)) i_iobuf (
     .dio_t ({gpio_t[89:32]}),
     .dio_i ({gpio_o[89:32]}),
@@ -367,15 +428,15 @@ module system_top (
               pmod0_d0      // 16
               }));
 
-  ad_iobuf #(.DATA_WIDTH(12)) i_carrier_iobuf_2 (
-    .dio_t ({gpio_t[11:0]}),
-    .dio_i ({gpio_o[11:0]}),
-    .dio_o ({gpio_i[11:0]}),
+  ad_iobuf #(.DATA_WIDTH(8)) i_carrier_iobuf_2 (
+    .dio_t ({gpio_t[7:0]}),
+    .dio_i ({gpio_o[7:0]}),
+    .dio_o ({gpio_i[7:0]}),
     .dio_p ({
-              led_gpio_3,         // 11
-              led_gpio_2,         // 10
-              led_gpio_1,         // 9
-              led_gpio_0,         // 8
+           //   led_gpio_3,         // 11
+           //   led_gpio_2,         // 10
+           //   led_gpio_1,         // 9
+           //   led_gpio_0,         // 8
               dip_gpio_3,         // 7
               dip_gpio_2,         // 6
               dip_gpio_1,         // 5

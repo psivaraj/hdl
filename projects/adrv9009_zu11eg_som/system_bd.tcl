@@ -141,3 +141,57 @@ connect_bd_net [get_bd_pins sys_ps8/maxihpm0_lpd_aclk] [get_bd_pins sys_ps8/pl_c
 
 source adrv9009_zu11eg_som_bd.tcl
 source carrier_bd.tcl
+
+  # Create instance: system_ila_1, and set properties
+  set system_ila_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_1 ]
+  set_property -dict [ list \
+   CONFIG.ALL_PROBE_SAME_MU_CNT {2} \
+   CONFIG.C_BRAM_CNT {3.5} \
+   CONFIG.C_DATA_DEPTH {16384} \
+   CONFIG.C_EN_STRG_QUAL {1} \
+   CONFIG.C_MON_TYPE {NATIVE} \
+   CONFIG.C_NUM_OF_PROBES {7} \
+   CONFIG.C_PROBE0_MU_CNT {2} \
+   CONFIG.C_PROBE0_TYPE {0} \
+   CONFIG.C_PROBE1_MU_CNT {2} \
+   CONFIG.C_PROBE1_TYPE {0} \
+   CONFIG.C_PROBE2_MU_CNT {2} \
+   CONFIG.C_PROBE2_TYPE {0} \
+   CONFIG.C_PROBE3_MU_CNT {2} \
+   CONFIG.C_PROBE3_TYPE {0} \
+   CONFIG.C_PROBE4_MU_CNT {2} \
+   CONFIG.C_PROBE4_TYPE {0} \
+   CONFIG.C_PROBE5_MU_CNT {2} \
+   CONFIG.C_PROBE6_MU_CNT {2} \
+ ] $system_ila_1
+
+
+  # Create instance: system_ila_2, and set properties
+  set system_ila_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_2 ]
+  set_property -dict [ list \
+   CONFIG.ALL_PROBE_SAME_MU_CNT {1} \
+   CONFIG.C_BRAM_CNT {1.5} \
+   CONFIG.C_DATA_DEPTH {16384} \
+   CONFIG.C_EN_STRG_QUAL {0} \
+   CONFIG.C_MON_TYPE {NATIVE} \
+   CONFIG.C_NUM_OF_PROBES {3} \
+   CONFIG.C_PROBE0_MU_CNT {1} \
+   CONFIG.C_PROBE0_TYPE {0} \
+   CONFIG.C_PROBE1_MU_CNT {1} \
+   CONFIG.C_PROBE1_TYPE {0} \
+   CONFIG.C_PROBE2_MU_CNT {1} \
+ ] $system_ila_2
+
+  ad_connect core_clk_b system_ila_1/clk
+  ad_connect system_ila_1/probe0 rx_adrv9009_som_tpl_core/adc_rst_sync
+  ad_connect system_ila_1/probe1 fsm_debug_0
+  ad_connect system_ila_1/probe2 rx_adrv9009_som_tpl_core/adc_valid_0
+  ad_connect system_ila_1/probe3 rx_adrv9009_som_tpl_core/adc_enable_0
+  ad_connect system_ila_1/probe4 rx_adrv9009_som_tpl_core/adc_data_0
+  ad_connect system_ila_1/probe5 rx_sysref_0
+  ad_connect system_ila_1/probe6 rx_adrv9009_som_tpl_core/link_valid
+
+  ad_connect core_clk_a system_ila_2/clk
+  ad_connect system_ila_2/probe0 tx_adrv9009_som_tpl_core/dac_valid_0
+  ad_connect system_ila_2/probe1 tx_adrv9009_som_tpl_core/dac_enable_0
+  ad_connect system_ila_2/probe2 tx_sysref_0

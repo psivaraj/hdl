@@ -44,14 +44,18 @@ module system_top (
   output              i2s_mclk,
   output              i2s_bclk,
   output              i2s_lrclk,
-  output              pmod0_d0, // CS
-  output              pmod0_d1, // MOSI
-  input               pmod0_d2, // MISO
-  output              pmod0_d3, // SCK
+  inout               pmod0_d0,
+  inout               pmod0_d1,
+  inout               pmod0_d2,
+  inout               pmod0_d3,
   inout               pmod0_d4,
   inout               pmod0_d5,
   inout               pmod0_d6,
   inout               pmod0_d7,
+  output              gpio_0_exp_n, //CS
+  output              gpio_0_exp_p, //MOSI
+  input               gpio_1_exp_n, //MISO
+  output              gpio_1_exp_p, //SCK
   output              led_gpio_0,
   output              led_gpio_1,
   output              led_gpio_2,
@@ -252,10 +256,10 @@ module system_top (
   assign spi_csn_adrv9009_b = spi_3_to_8_csn[1];
   assign spi_csn_hmc7044 = spi_3_to_8_csn[2];
   assign spi_csn_hmc7044_car = spi_3_to_8_csn[3];
-  assign pmod0_d0 = spi_3_to_8_csn[4];
-  assign pmod0_d3 = spi_clk;
-  assign pmod0_d1 = spi_3_to_8_csn[4] == 1'b0 ?  spi_mosi : 1'bZ;
-  assign spi_miso_s = spi_3_to_8_csn[4] == 1'b0 ? pmod0_d2 : spi_miso;
+  assign gpio_0_exp_n = spi_3_to_8_csn[4];
+  assign gpio_1_exp_p = spi_clk;
+  assign gpio_0_exp_p = spi_3_to_8_csn[4] == 1'b0 ?  spi_mosi : 1'bZ;
+  assign spi_miso_s = spi_3_to_8_csn[4] == 1'b0 ? gpio_1_exp_n : spi_miso;
 
   adrv9009_zu11eg_som_spi i_spi (
   .spi_csn(spi_3_to_8_csn),
@@ -348,15 +352,20 @@ module system_top (
               hmc7044_car_reset,  // 23
               resetb_ad9545}));   // 22
 
-  ad_iobuf #(.DATA_WIDTH(4)) i_carrier_iobuf_1 (
-    .dio_t ({gpio_t[19:16]}),
-    .dio_i ({gpio_o[19:16]}),
-    .dio_o ({gpio_i[19:16]}),
+  ad_iobuf #(.DATA_WIDTH(8)) i_carrier_iobuf_1 (
+    .dio_t ({gpio_t[19:12]}),
+    .dio_i ({gpio_o[19:12]}),
+    .dio_o ({gpio_i[19:12]}),
     .dio_p ({
               pmod0_d7,     // 19
               pmod0_d6,     // 18
               pmod0_d5,     // 17
-              pmod0_d4}));  // 16
+              pmod0_d4,     // 16
+              pmod0_d3,     // 19
+              pmod0_d2,     // 18
+              pmod0_d1,     // 17
+              pmod0_d0      // 16
+              }));
 
   ad_iobuf #(.DATA_WIDTH(12)) i_carrier_iobuf_2 (
     .dio_t ({gpio_t[11:0]}),

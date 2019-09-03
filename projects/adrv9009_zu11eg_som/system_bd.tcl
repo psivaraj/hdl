@@ -165,7 +165,6 @@ source carrier_bd.tcl
    CONFIG.C_PROBE6_MU_CNT {2} \
  ] $system_ila_1
 
-
   # Create instance: system_ila_2, and set properties
   set system_ila_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_2 ]
   set_property -dict [ list \
@@ -173,13 +172,18 @@ source carrier_bd.tcl
    CONFIG.C_BRAM_CNT {1.5} \
    CONFIG.C_DATA_DEPTH {16384} \
    CONFIG.C_EN_STRG_QUAL {0} \
-   CONFIG.C_MON_TYPE {NATIVE} \
+   CONFIG.C_MON_TYPE {MIX} \
+   CONFIG.C_NUM_MONITOR_SLOTS {1} \
    CONFIG.C_NUM_OF_PROBES {3} \
    CONFIG.C_PROBE0_MU_CNT {1} \
    CONFIG.C_PROBE0_TYPE {0} \
    CONFIG.C_PROBE1_MU_CNT {1} \
    CONFIG.C_PROBE1_TYPE {0} \
    CONFIG.C_PROBE2_MU_CNT {1} \
+   CONFIG.C_SLOT_0_APC_EN {0} \
+   CONFIG.C_SLOT_0_AXI_DATA_SEL {1} \
+   CONFIG.C_SLOT_0_AXI_TRIG_SEL {1} \
+   CONFIG.C_SLOT_0_INTF_TYPE {xilinx.com:interface:axis_rtl:1.0} \
  ] $system_ila_2
 
   ad_connect core_clk_b system_ila_1/clk
@@ -195,3 +199,4 @@ source carrier_bd.tcl
   ad_connect system_ila_2/probe0 tx_adrv9009_som_tpl_core/dac_valid_0
   ad_connect system_ila_2/probe1 tx_adrv9009_som_tpl_core/dac_enable_0
   ad_connect system_ila_2/probe2 tx_sysref_0
+  ad_connect system_ila_2/SLOT_0_AXIS tx_adrv9009_som_tpl_core/link

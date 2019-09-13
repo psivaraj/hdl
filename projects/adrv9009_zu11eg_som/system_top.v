@@ -276,7 +276,6 @@ module system_top (
   assign gpio_i[94:90] = gpio_o[94:90];
   assign gpio_i[31:28] = gpio_o[31:28];
   assign gpio_i[21:20] = gpio_o[21:20];
-  assign gpio_i[15: 7] = gpio_o[15: 7];
 
   // DEBUG
   reg [26:0]  core_clk_counter_a;
@@ -424,10 +423,10 @@ module system_top (
               pmod0_d6,     // 18
               pmod0_d5,     // 17
               pmod0_d4,     // 16
-              pmod0_d3,     // 19
-              pmod0_d2,     // 18
-              pmod0_d1,     // 17
-              pmod0_d0      // 16
+              pmod0_d3,     // 15
+              pmod0_d2,     // 14
+              pmod0_d1,     // 13
+              pmod0_d0      // 12
               }));
 
   ad_iobuf #(.DATA_WIDTH(7)) i_carrier_iobuf_2 (

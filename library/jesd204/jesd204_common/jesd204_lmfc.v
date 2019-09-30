@@ -51,13 +51,21 @@ module jesd204_lmfc (
   input sysref,
 
   input [7:0] cfg_beats_per_multiframe,
-  input [7:0] cfg_lmfc_offset,
+  input [7:0] cfg_lmfc_lemc_offset,
   input cfg_sysref_oneshot,
   input cfg_sysref_disable,
 
-  output reg lmfc_edge,
-  output reg lmfc_clk,
-  output reg [7:0] lmfc_counter,
+  // Local MultiFrame Clock - LMFC for 8b10b encoder
+  // Local Extendend MultiBlock Clock - LEMC for 64b66b/64b80b encoder
+  output reg lmfc_lemc_edge,
+  output reg lmfc_lemc_clk,
+  output reg [7:0] lmfc_lemc_counter,
+
+  // Local MultiBlock clock edge
+  output reg lmc_edge,
+  output reg lmc_quarter_edge,
+  // End of Extended MultiBlock
+  output reg eoemb,
 
   output reg sysref_edge,
   output reg sysref_alignment_error
@@ -70,12 +78,12 @@ reg sysref_d3 = 1'b0;
 
 reg sysref_captured;
 
-/* lmfc_octet_counter = lmfc_counter * (char_clock_rate / device_clock_rate) */
-reg [7:0] lmfc_counter_next = 'h00;
+/* lmfc_lemc_octet_counter = lmfc_lemc_counter * (char_clock_rate / device_clock_rate) */
+reg [7:0] lmfc_lemc_counter_next = 'h00;
 
-reg lmfc_clk_p1 = 1'b1;
+reg lmfc_lemc_clk_p1 = 1'b1;
 
-reg lmfc_active = 1'b0;
+reg lmfc_lemc_active = 1'b0;
 
 always @(posedge clk) begin
   sysref_r <= sysref;
@@ -112,24 +120,24 @@ end
 /*
  * The configuration must be static when the core is out of reset. Otherwise
  * undefined behaviour might occur.
- * E.g. lmfc_counter > beats_per_multiframe
+ * E.g. lmfc_lemc_counter > beats_per_multiframe
  *
  * To change the configuration first assert reset, then update the configuration
  * setting, finally deassert reset.
  */
 
 always @(*) begin
-  if (lmfc_counter == cfg_beats_per_multiframe) begin
-    lmfc_counter_next <= 'h00;
+  if (lmfc_lemc_counter == cfg_beats_per_multiframe) begin
+    lmfc_lemc_counter_next <= 'h00;
   end else begin
-    lmfc_counter_next <= lmfc_counter + 1'b1;
+    lmfc_lemc_counter_next <= lmfc_lemc_counter + 1'b1;
   end
 end
 
 always @(posedge clk) begin
   if (reset == 1'b1) begin
-    lmfc_counter <= 'h01;
-    lmfc_active <= cfg_sysref_disable;
+    lmfc_lemc_counter <= 'h01;
+    lmfc_lemc_active <= cfg_sysref_disable;
   end else begin
     /*
      * In oneshot mode only the first occurence of the
@@ -137,10 +145,10 @@ always @(posedge clk) begin
      */
     if (sysref_edge == 1'b1 &&
         (cfg_sysref_oneshot == 1'b0 || sysref_captured == 1'b0)) begin
-      lmfc_counter <= cfg_lmfc_offset;
-      lmfc_active <= 1'b1;
+      lmfc_lemc_counter <= cfg_lmfc_lemc_offset;
+      lmfc_lemc_active <= 1'b1;
     end else begin
-      lmfc_counter <= lmfc_counter_next;
+      lmfc_lemc_counter <= lmfc_lemc_counter_next;
     end
   end
 end
@@ -154,33 +162,57 @@ always @(posedge clk) begin
      * setting.
      */
     sysref_alignment_error <= 1'b0;
-    if (sysref_edge == 1'b1 && lmfc_active == 1'b1 &&
-        lmfc_counter_next != cfg_lmfc_offset) begin
+    if (sysref_edge == 1'b1 && lmfc_lemc_active == 1'b1 &&
+        lmfc_lemc_counter_next != cfg_lmfc_lemc_offset) begin
       sysref_alignment_error <= 1'b1;
     end
   end
 end
 
 always @(posedge clk) begin
-  if (lmfc_counter == 'h00 && lmfc_active == 1'b1) begin
-    lmfc_edge <= 1'b1;
+  if (lmfc_lemc_counter == 'h00 && lmfc_lemc_active == 1'b1) begin
+    lmfc_lemc_edge <= 1'b1;
   end else begin
-    lmfc_edge <= 1'b0;
+    lmfc_lemc_edge <= 1'b0;
+  end
+end
+
+// 1 MultiBlock = 32 blocks
+always @(posedge clk) begin
+  if (lmfc_lemc_counter[4:0] == 'h00 && lmfc_lemc_active == 1'b1) begin
+    lmc_edge <= 1'b1;
+  end else begin
+    lmc_edge <= 1'b0;
+  end
+end
+always @(posedge clk) begin
+  if (lmfc_lemc_counter[2:0] == 'h00 && lmfc_lemc_active == 1'b1) begin
+    lmc_quarter_edge <= 1'b1;
+  end else begin
+    lmc_quarter_edge <= 1'b0;
+  end
+end
+// End of Extended MultiBlock
+always @(posedge clk) begin
+  if (lmfc_lemc_active == 1'b1) begin
+    eoemb <= lmfc_lemc_counter[7:5] == cfg_beats_per_multiframe[7:5];
+  end else begin
+    eoemb <= 1'b0;
   end
 end
 
 always @(posedge clk) begin
   if (reset == 1'b1) begin
-    lmfc_clk_p1 <= 1'b0;
-  end else if (lmfc_active == 1'b1) begin
-    if (lmfc_counter == cfg_beats_per_multiframe) begin
-      lmfc_clk_p1 <= 1'b1;
-    end else if (lmfc_counter == cfg_beats_per_multiframe[7:1]) begin
-      lmfc_clk_p1 <= 1'b0;
+    lmfc_lemc_clk_p1 <= 1'b0;
+  end else if (lmfc_lemc_active == 1'b1) begin
+    if (lmfc_lemc_counter == cfg_beats_per_multiframe) begin
+      lmfc_lemc_clk_p1 <= 1'b1;
+    end else if (lmfc_lemc_counter == cfg_beats_per_multiframe[7:1]) begin
+      lmfc_lemc_clk_p1 <= 1'b0;
     end
   end
 
-  lmfc_clk <= lmfc_clk_p1;
+  lmfc_lemc_clk <= lmfc_lemc_clk_p1;
 end
 
 endmodule

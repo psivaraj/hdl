@@ -87,7 +87,8 @@ ad_connect sys_cpu_resetn i2s_rx_dma/m_dest_axi_aresetn
 
 ad_ip_instance xxv_ethernet ethernet_sfp
 ad_ip_parameter ethernet_sfp CONFIG.ADD_GT_CNTRL_STS_PORTS {0}
-ad_ip_parameter ethernet_sfp CONFIG.BASE_R_KR {BASE-R}
+ad_ip_parameter ethernet_sfp CONFIG.BASE_R_KR {BASE-KR}
+ad_ip_parameter ethernet_sfp CONFIG.INCLUDE_AUTO_NEG_LT_LOGIC {Include AN/LT Logic}
 ad_ip_parameter ethernet_sfp CONFIG.CORE {Ethernet MAC+PCS/PMA 64-bit}
 ad_ip_parameter ethernet_sfp CONFIG.DATA_PATH_INTERFACE {AXI Stream}
 ad_ip_parameter ethernet_sfp CONFIG.ENABLE_PREEMPTION {0}
@@ -146,6 +147,14 @@ ad_ip_instance xlconstant constant_101b
 ad_ip_parameter constant_101b CONFIG.CONST_WIDTH {3}
 ad_ip_parameter constant_101b CONFIG.CONST_VAL {5}
 
+ad_ip_instance xlconstant const_0
+ad_ip_parameter const_0 CONFIG.CONST_WIDTH 48
+ad_ip_parameter const_0 CONFIG.CONST_VAL 0
+
+ad_ip_instance xlconstant const_1
+ad_ip_parameter const_1 CONFIG.CONST_WIDTH 1
+ad_ip_parameter const_1 CONFIG.CONST_VAL 1
+
 ad_ip_instance xlconstant const_2
 ad_ip_parameter const_2 CONFIG.CONST_WIDTH 56
 ad_ip_parameter const_2 CONFIG.CONST_VAL 0
@@ -183,10 +192,17 @@ ad_connect dma_sfp/mm2s_prmry_reset_out_n util_not_4/Op1
 ad_connect util_not_4/Res ethernet_sfp/tx_reset_0
 
 ad_connect sys_cpu_clk  ethernet_sfp/dclk
+ad_connect sys_cpu_clk  ethernet_sfp/an_clk_0
 ad_connect sys_cpu_reset  ethernet_sfp/sys_reset
+ad_connect sys_cpu_reset  ethernet_sfp/an_reset_0
 ad_connect constant_101b/dout ethernet_sfp/rxoutclksel_in_0
 ad_connect constant_101b/dout ethernet_sfp/txoutclksel_in_0
 ad_connect ethernet_sfp/rx_core_clk_0 ethernet_sfp/rx_clk_out_0
+
+ad_connect const_1/dout ethernet_sfp/ctl_an_loc_np_0
+ad_connect const_1/dout ethernet_sfp/ctl_an_lp_np_ack_0
+
+ad_connect const_0/dout ethernet_sfp/an_loc_np_data_0
 
 # fan control
 

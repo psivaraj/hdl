@@ -262,6 +262,7 @@ ad_connect  logic_or/Op2  tx_fir_interpolator/valid_out_2
 ad_connect  logic_or/Res  util_ad9371_tx_upack/fifo_rd_en
 
 ad_connect  tx_fir_interpolator/active dac_fir_filter_active
+ad_connect  tx_fir_interpolator/VCC    VCC
 
 # TODO: Add streaming AXI interface for DAC FIFO
 ad_connect  util_ad9371_tx_upack/s_axis_valid VCC
@@ -303,6 +304,7 @@ ad_connect  rx_fir_decimator/valid_out_0 util_ad9371_rx_cpack/fifo_wr_en
 ad_connect  rx_ad9371_tpl_core/adc_dovf util_ad9371_rx_cpack/fifo_wr_overflow
 
 ad_connect rx_fir_decimator/active adc_fir_filter_active
+ad_connect rx_fir_decimator/VCC    VCC
 
 ad_connect  axi_ad9371_rx_clkgen/clk_0 axi_ad9371_rx_dma/fifo_wr_clk
 ad_connect  util_ad9371_rx_cpack/packed_fifo_wr axi_ad9371_rx_dma/fifo_wr

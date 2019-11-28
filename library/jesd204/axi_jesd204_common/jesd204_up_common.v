@@ -216,7 +216,7 @@ always @(*) begin
   /* Core configuration */
   12'h004: up_rdata <= NUM_LANES;
   12'h005: up_rdata <= DATA_PATH_WIDTH;
-  12'h006: up_rdata <= {22'b0, MODE_64B66B_8B10B_N[1:0], NUM_LINKS[7:0]};
+  12'h006: up_rdata <= {22'b0,MODE_64B66B_8B10B_N[0],~MODE_64B66B_8B10B_N[0], NUM_LINKS[7:0]};
   /* 0x07-0x0f reserved for future use */
   /* 0x10-0x1f reserved for core specific HDL configuration information */
 
